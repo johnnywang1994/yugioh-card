@@ -139,6 +139,7 @@ http.createServer((req, res) => {
 |      twentieth      | 是否是 20 周年 | boolean |                                                          —                                                          |                    —                    |       false       |
 |       radius        |   是否是圆角   | boolean |                                                          —                                                          |                    —                    |       true        |
 |        scale        |   卡片缩放    | number  |                                                          —                                                          |                    —                    |         1         |
+|        imageContain        |   图片是否保持比例   | boolean  |                                                          —                                                          |                    —                    |       false       |
 
 ### 超速决斗
 

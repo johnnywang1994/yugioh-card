@@ -11,6 +11,46 @@ import astralStyle from './style/astral-style';
 import custom1Style from './style/custom1-style';
 import custom2Style from './style/custom2-style';
 
+async function getImageContainSize(imageUrl, maxWidth, maxHeight) {
+  const getRatio = (imgElement) => {
+    // 取得圖片原始寬高
+    const originalWidth = imgElement.naturalWidth;
+    const originalHeight = imgElement.naturalHeight;
+
+    // 計算縮放比例
+    const ratioWidth = maxWidth / originalWidth;
+    const ratioHeight = maxHeight / originalHeight;
+    const ratio = Math.min(ratioWidth, ratioHeight);
+
+    const width = originalWidth * ratio;
+    const height = originalHeight * ratio;
+    return {
+      ratio,
+      width,
+      height,
+      offsetX: (maxWidth - width) / 2,
+      offsetY: (maxHeight - height) / 2,
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      const body = document.documentElement || document.body
+      const img = document.createElement('img')
+      img.src = imageUrl
+      img.style.maxWidth = '1px'
+      img.style.visibility = 'hidden'
+      img.onload = () => {
+        resolve(getRatio(img))
+        body.removeChild(img)
+      }
+      body.appendChild(img)
+    } catch (err) {
+      reject(err)
+    }
+  })
+}
+
 export class YugiohCard extends Card {
   cardLeaf = null;
   nameLeaf = null;
@@ -73,6 +113,7 @@ export class YugiohCard extends Card {
     twentieth: false,
     radius: true,
     scale: 1,
+    imageContain: false,
   };
 
   constructor(data = {}) {
@@ -291,16 +332,19 @@ export class YugiohCard extends Card {
     });
   }
 
-  drawImage() {
+  async drawImage() {
     if (!this.imageLeaf) {
       this.imageLeaf = new Rect();
       this.listenImageStatus(this.imageLeaf);
       this.leafer.add(this.imageLeaf);
     }
 
-    this.imageLeaf.set({
-      width: this.data.type === 'pendulum' ? 1205 : 1054,
-      height: this.data.type === 'pendulum' ? 1205 : 1054,
+    const maxWidth = this.data.type === 'pendulum' ? 1205 : 1054;
+    const maxHeight = this.data.type === 'pendulum' ? 1205 : 1054;
+    const options = {
+      url: this.data.image,
+      width: maxWidth,
+      height: maxHeight,
       x: this.data.type === 'pendulum' ? 94 : 170,
       y: this.data.type === 'pendulum' ? 364 : 375,
       fill: {
@@ -311,7 +355,16 @@ export class YugiohCard extends Card {
       },
       visible: this.data.image,
       zIndex: 10,
-    });
+    };
+    // contain image
+    if (this.data.imageContain) {
+      const { width, height, offsetX, offsetY } = await getImageContainSize(this.data.image, maxWidth, maxHeight);
+      options.width = width;
+      options.height = height;
+      options.x += offsetX;
+      options.y += offsetY;
+    }
+    this.imageLeaf.set(options);
   }
 
   drawMask() {
